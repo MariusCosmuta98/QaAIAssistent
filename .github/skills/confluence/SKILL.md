@@ -22,7 +22,7 @@ Prefer Atlassian MCP server (`atlassian/*`). Fallback: REST `GET /wiki/rest/api/
 1. Get current `version.number`.
 2. `PUT /content/{id}` with incremented version and merged body. Never overwrite blindly.
 
-## Required Config (see [.env](../../.env))
+## Required Config (see [.env](../../../.env))
 - Uses the same Atlassian credentials as Jira: `JIRA_BASE_URL`, `JIRA_USER_EMAIL`, `JIRA_API_TOKEN`.
 - Set `CONFLUENCE_BASE_URL` only if Confluence is on a separate instance.
 

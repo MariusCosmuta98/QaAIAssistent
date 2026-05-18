@@ -22,7 +22,7 @@ Prefer the Figma MCP server (`figma/*` or `figma-dev-mode/*`). Fallback: REST `h
    - `prototypeStartNodeID` / interactions (= flow)
 4. Return only the [figma-fetcher agent](../../agents/figma-fetcher.agent.md) format.
 
-## Required Config (see [.env](../../.env))
+## Required Config (see [.env](../../../.env))
 - `FIGMA_TOKEN` — personal access token from https://www.figma.com/developers/api#access-tokens
 
 ## Pitfalls

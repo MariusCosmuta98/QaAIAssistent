@@ -1,0 +1,37 @@
+{
+  // JetBrains (IntelliJ, WebStorm, etc.) MCP configuration.
+  // This file is auto-detected from .junie/mcp.json at project root.
+  // Credentials are loaded from .env at the project root.
+  "servers": {
+    // ── Jira + Confluence (mandatory) ──────────────────
+    "atlassian": {
+      "type": "sse",
+      "url": "https://mcp.atlassian.com/v1/sse",
+      "env": {
+        "JIRA_BASE_URL": "${env:JIRA_BASE_URL}",
+        "JIRA_USER_EMAIL": "${env:JIRA_USER_EMAIL}",
+        "JIRA_API_TOKEN": "${env:JIRA_API_TOKEN}"
+      }
+    },
+
+    // ── Zephyr Scale (mandatory) ───────────────────────
+    "fetch": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/mcp-server-fetch"],
+      "env": {
+        "ZEPHYR_BASE_URL": "${env:ZEPHYR_BASE_URL}",
+        "ZEPHYR_TOKEN": "${env:ZEPHYR_TOKEN}",
+        "ZEPHYR_PROJECT_KEY": "${env:ZEPHYR_PROJECT_KEY}"
+      }
+    }
+
+    // ── Figma (optional) ───────────────────────────────
+    // "figma": {
+    //   "command": "npx",
+    //   "args": ["-y", "figma-developer-mcp"],
+    //   "env": {
+    //     "FIGMA_TOKEN": "${env:FIGMA_TOKEN}"
+    //   }
+    // }
+  }
+}

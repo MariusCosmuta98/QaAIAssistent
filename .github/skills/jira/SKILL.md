@@ -23,7 +23,7 @@ Prefer the Atlassian MCP server if configured (`atlassian/*` or `mcp-atlassian/*
 - Zephyr cycle: link of type "Tests" or label `zephyr-cycle:<id>`.
 - Figma: any `figma.com/file/...` or `figma.com/design/...` URL in description/comments.
 
-## Required Config (see [.env](../../.env))
+## Required Config (see [.env](../../../.env))
 - `JIRA_BASE_URL` — e.g. `https://your-domain.atlassian.net`
 - `JIRA_USER_EMAIL` — Atlassian account email
 - `JIRA_API_TOKEN` — API token from https://id.atlassian.com/manage-profile/security/api-tokens
