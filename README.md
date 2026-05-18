@@ -37,6 +37,11 @@ Portable Copilot/agent customization for QA teams. Copy the `.github/` folder in
 ## Setup per host project
 
 1. Copy `.github/` into the project root.
-2. Configure MCP servers (or env vars) for: Atlassian (Jira + Confluence), Zephyr Scale, Figma.
-3. Run `/scan-project` once.
-4. Use `/implement-ticket <KEY>` for new work.
+2. Copy `.github/.env` to `.github/.env` and fill in your credentials:
+   - **Jira / Confluence**: `JIRA_BASE_URL`, `JIRA_USER_EMAIL`, `JIRA_API_TOKEN`
+   - **Zephyr Scale**: `ZEPHYR_TOKEN`, `ZEPHYR_PROJECT_KEY`
+   - **Figma**: `FIGMA_TOKEN`
+3. Add `.github/.env` to `.gitignore` — never commit real tokens.
+4. Configure MCP servers in VS Code (`settings.json` or `.vscode/mcp.json`) so the agents have tools to call. See [.env](.github/.env) for links to generate each token.
+5. Run `/scan-project` once.
+6. Use `/implement-ticket <KEY>` for new work.

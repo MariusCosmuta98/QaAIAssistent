@@ -25,6 +25,11 @@ Auth: `ZEPHYR_TOKEN` env var as `Bearer`.
 2. `POST /testcases/{key}/teststeps` with the ordered steps.
 3. Link to Jira: `POST /testcases/{key}/links/issues` with the Jira key.
 
+## Required Config (see [.env](../../.env))
+- `ZEPHYR_BASE_URL` — defaults to `https://api.zephyrscale.smartbear.com/v2`
+- `ZEPHYR_TOKEN` — API token (Bearer)
+- `ZEPHYR_PROJECT_KEY` — Zephyr project key (may differ from Jira)
+
 ## Pitfalls
 - Project key in Zephyr ≠ Jira project key sometimes — confirm via env var `ZEPHYR_PROJECT_KEY`.
 - Steps API is paginated; always loop until `isLast`.
