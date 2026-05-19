@@ -1,9 +1,14 @@
 ---
 description: "Quick read-only summary of a Jira ticket + its Zephyr tests + Figma links. No code changes."
-agent: "qa-orchestrator"
+agent: "jira-fetcher"
 argument-hint: "JIRA-KEY"
 ---
 
-Summarize **${input:ticketKey:Jira ticket key}** for QA review only.
+Fetch **${input:ticketKey:Jira ticket key}** following your normal procedure (with session cache).
 
-Delegate to `jira-fetcher`, `zephyr-fetcher`, and `figma-fetcher` (if linked). Combine outputs. Do NOT touch the codebase.
+After returning your standard output block, additionally:
+- If `zephyr:` lists ids/cycle, also call `zephyr-fetcher` with them.
+- If `figma:` has a URL, also call `figma-fetcher`.
+- Run those two in parallel if both apply.
+
+Do NOT touch the codebase. Do NOT read `PROJECT_CONTEXT.md`. Do NOT involve the orchestrator.

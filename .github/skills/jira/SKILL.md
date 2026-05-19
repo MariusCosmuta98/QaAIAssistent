@@ -14,14 +14,35 @@ Prefer the Atlassian MCP server if configured (`atlassian/*` or `mcp-atlassian/*
 
 ## Procedure
 1. Resolve ticket key (uppercase, e.g. `abc-123` → `ABC-123`).
-2. Fetch the issue with fields: `summary,status,issuetype,description,customfield_acceptance,issuelinks,attachment,subtasks`.
-3. Parse description for embedded Figma/Confluence URLs and Zephyr cycle ids.
+2. Fetch the issue with fields: `summary,status,issuetype,description,customfield_acceptance,issuelinks,attachment,subtasks,comment`.
+3. Run the **Zephyr / Figma / Confluence auto-extraction** below over every text field.
 4. Return only the [jira-fetcher agent](../../agents/jira-fetcher.agent.md) output format.
+
+## Auto-Extract Linked Resources
+Scan `description`, `comment.comments[*].body`, `issuelinks[*]`, `remotelinks`, and any custom field text for:
+
+### Zephyr
+Pull **all** matches and de-duplicate. Pass them to the orchestrator so `zephyr-fetcher` can query directly (saves a round-trip search by Jira key).
+- Test case keys: regex `\b[A-Z][A-Z0-9_]+-T\d+\b` (Zephyr Scale convention, e.g. `ABC-T42`).
+- Cycle ids: regex `(?:cycle[:#=/-]?)\s*([A-Z0-9_-]{4,})` or links containing `/cycles/` / `testPlayer/`.
+- Labels: `zephyr-cycle:<id>`, `zephyr-tc:<key>`.
+- Issue links of type `Tests` / `is tested by` → use the linked key.
+- Remote links whose URL host matches `*zephyrscale*` or path contains `/zephyr/`.
+- Output format inside the fetcher's `zephyr:` line:
+  - test case keys → `ABC-T1, ABC-T2`
+  - cycle only → `cycle:<id>`
+  - both → `ABC-T1, ABC-T2; cycle:<id>`
+  - nothing found → `none`
+
+### Figma
+- Any URL matching `figma\.com/(file|design|proto)/[^\s)]+`. Keep the full URL.
+
+### Confluence
+- Any URL matching `\.atlassian\.net/wiki/` or `confluence[^\s)]*`.
 
 ## Field Map (common)
 - Acceptance Criteria: usually `customfield_10000`+ — search description if missing.
-- Zephyr cycle: link of type "Tests" or label `zephyr-cycle:<id>`.
-- Figma: any `figma.com/file/...` or `figma.com/design/...` URL in description/comments.
+- Description may be ADF (Atlassian Document Format), not Markdown — flatten before regex scanning.
 
 ## Required Config (see [.env](../../../.env))
 - `JIRA_BASE_URL` — e.g. `https://your-domain.atlassian.net`
@@ -29,5 +50,5 @@ Prefer the Atlassian MCP server if configured (`atlassian/*` or `mcp-atlassian/*
 - `JIRA_API_TOKEN` — API token from https://id.atlassian.com/manage-profile/security/api-tokens
 
 ## Pitfalls
-- Sub-tasks have their own ACs — check `subtasks` and aggregate only if the parent is the target.
-- Description may be ADF (Atlassian Document Format), not Markdown — flatten before extracting links.
+- Sub-tasks have their own ACs and their own Zephyr links — aggregate only if the parent is the target.
+- A Jira key (`ABC-123`) and a Zephyr test case key (`ABC-T123`) look similar — only the `-T<digits>` form is a Zephyr case.

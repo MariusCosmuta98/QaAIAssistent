@@ -1,4 +1,3 @@
-See [AGENTS.md](./AGENTS.md).
 # QA AI Assistant
 
 Portable QA assistant. Drop into any project. Helps QA engineers implement tickets by:
@@ -34,7 +33,23 @@ To keep runs cheap:
 - `/scan-project` is **manual-only**. Run it once per repo (and re-run only when the stack changes).
 - `jira-fetcher` auto-extracts Zephyr / Figma / Confluence ids from the ticket. The orchestrator calls Zephyr/Figma **only if** ids were found — never speculatively.
 - `zephyr-fetcher` queries by extracted ids directly; it does not also search by Jira key.
-- Subagents return compact fixed-format blocks (see each agent file). Do not re-read skill files from the orchestrator.
+- Subagents return compact fixed-format blocks. Do not re-read skill files from the orchestrator.
 - Do not re-read `PROJECT_CONTEXT.md` mid-task. Read once.
-- `/review-ticket` skips `PROJECT_CONTEXT.md` entirely.
+- `/review-ticket` skips the orchestrator AND `PROJECT_CONTEXT.md` entirely — it calls `jira-fetcher` directly.
 - Cap Zephyr results at 10 cases; cap `PROJECT_CONTEXT.md` at ~80 lines.
+
+## Session Cache (`/memories/session/`)
+
+Fetcher outputs are cached for the duration of the conversation so the same ticket isn't fetched twice.
+
+Cache file naming:
+- Jira:      `/memories/session/jira-<KEY>.md`
+- Zephyr:    `/memories/session/zephyr-<KEY-or-cycleId>.md`
+- Figma:     `/memories/session/figma-<nodeId-or-urlSlug>.md`
+
+Protocol (every fetcher follows it):
+1. **Before** discovering tools, check if the cache file exists. If yes → return its contents verbatim. No API call.
+2. **After** a successful fetch, write the formatted output to the cache file (overwrite).
+3. The user can invalidate by saying "refresh <KEY>" — fetchers then skip step 1.
+
+The orchestrator does not manage the cache; each fetcher owns its own file.
