@@ -23,16 +23,30 @@ Scan `description`, `comment.comments[*].body`, `issuelinks[*]`, `remotelinks`, 
 
 ### Zephyr
 Pull **all** matches and de-duplicate. Pass them to the orchestrator so `zephyr-fetcher` can query directly (saves a round-trip search by Jira key).
+
+#### Step A — Scan Jira fields
 - Test case keys: regex `\b[A-Z][A-Z0-9_]+-T\d+\b` (Zephyr Scale convention, e.g. `ABC-T42`).
 - Cycle ids: regex `(?:cycle[:#=/-]?)\s*([A-Z0-9_-]{4,})` or links containing `/cycles/` / `testPlayer/`.
 - Labels: `zephyr-cycle:<id>`, `zephyr-tc:<key>`.
 - Issue links of type `Tests` / `is tested by` → use the linked key.
 - Remote links whose URL host matches `*zephyrscale*` or path contains `/zephyr/`.
-- Output format inside the fetcher's `zephyr:` line:
-  - test case keys → `ABC-T1, ABC-T2`
-  - cycle only → `cycle:<id>`
-  - both → `ABC-T1, ABC-T2; cycle:<id>`
-  - nothing found → `none`
+
+#### Step B — Zephyr-side fallback (if Step A found nothing)
+Zephyr Scale stores coverage links **on its own side** — they do NOT appear in any Jira REST API response (not in `issuelinks`, `remotelinks`, labels, or description). When Step A yields no Zephyr references, query the Zephyr Scale API directly:
+
+1. Get the Jira issue numeric id from the fetched issue (`id` field in the Jira response, e.g. `1491225`).
+2. Paginate through `GET {ZEPHYR_BASE_URL}/testcases?projectKey={PROJECT_KEY}&startAt={n}&maxResults=200`.
+   - Use `ZEPHYR_TOKEN` (Bearer) and `ZEPHYR_PROJECT_KEY` from env (fall back to the Jira project key).
+3. For each test case, check `links.issues[*].issueId` — if it matches the Jira issue numeric id, that test case covers this ticket.
+4. Collect matching test case keys (e.g. `QE-T1403`).
+
+> **Why this is needed:** Zephyr Scale's "Coverage" link type is stored only in Zephyr's database and surfaced only through the Zephyr API. The Jira UI shows it via the Zephyr Scale plugin panel, but the Jira REST API has no visibility into it.
+
+#### Output format
+- test case keys → `ABC-T1, ABC-T2`
+- cycle only → `cycle:<id>`
+- both → `ABC-T1, ABC-T2; cycle:<id>`
+- nothing found → `none`
 
 ### Figma
 - Any URL matching `figma\.com/(file|design|proto)/[^\s)]+`. Keep the full URL.
@@ -44,11 +58,12 @@ Pull **all** matches and de-duplicate. Pass them to the orchestrator so `zephyr-
 - Acceptance Criteria: usually `customfield_10000`+ — search description if missing.
 - Description may be ADF (Atlassian Document Format), not Markdown — flatten before regex scanning.
 
-## Required Config (see [.env](../../../.env))
+## Required Config (see [.env](../../../QaAIAssistent/.env))
 - `JIRA_BASE_URL` — e.g. `https://your-domain.atlassian.net`
 - `JIRA_USER_EMAIL` — Atlassian account email
 - `JIRA_API_TOKEN` — API token from https://id.atlassian.com/manage-profile/security/api-tokens
 
 ## Pitfalls
+- **Zephyr coverage links are invisible from Jira.** The Jira UI shows them via the Zephyr Scale plugin panel, but the Jira REST API returns nothing — no issue links, no remote links, no custom fields. Always run the Zephyr-side fallback (Step B above) when Jira fields yield no Zephyr references.
 - Sub-tasks have their own ACs and their own Zephyr links — aggregate only if the parent is the target.
 - A Jira key (`ABC-123`) and a Zephyr test case key (`ABC-T123`) look similar — only the `-T<digits>` form is a Zephyr case.

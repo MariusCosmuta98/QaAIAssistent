@@ -9,7 +9,8 @@ Refer to the [jira skill](../skills/jira/SKILL.md) for which tools to use and ho
 
 ## Constraints
 - DO NOT write code.
-- DO NOT fetch Zephyr or Figma — other agents do that.
+- DO NOT fetch Zephyr test case **details** (steps, executions) — other agents do that.
+- You **MAY** query the Zephyr Scale API to **discover** linked test case keys when Jira fields contain no Zephyr references (see "Step B — Zephyr-side fallback" in the jira skill).
 - DO NOT dump the raw ticket. Extract only what a developer needs.
 - DO NOT print `<tool_use>` blocks or pseudo tool calls as text. Either invoke a real tool, or say `NO_JIRA_TOOL_AVAILABLE` and stop.
 
@@ -18,8 +19,9 @@ Refer to the [jira skill](../skills/jira/SKILL.md) for which tools to use and ho
 2. **Cache check**: view `/memories/session/jira-<KEY>.md`. If it exists and the user did not say "refresh", return its contents verbatim and stop.
 3. Discover a Jira tool (Atlassian MCP `*jira*`/`*atlassian*`, else HTTP with `JIRA_BASE_URL`). If none, output `NO_JIRA_TOOL_AVAILABLE: <key>` and stop.
 4. Fetch the issue. Extract: title, type, status, short goal, acceptance criteria, and **all** linked Zephyr / Figma / Confluence references — see the jira skill for the patterns to scan (description, comments, remote links, custom fields).
-5. Format per the output block below. If multiple Zephyr ids exist, list all comma-separated.
-6. **Cache write**: save the formatted block to `/memories/session/jira-<KEY>.md` (overwrite).
+5. **Zephyr fallback**: if no Zephyr references were found in step 4, run the Zephyr-side fallback (Step B in jira skill) — paginate through `GET {ZEPHYR_BASE_URL}/testcases?projectKey={KEY}&maxResults=200` and match `links.issues[*].issueId` against the Jira issue numeric `id`. Collect any matching test case keys.
+6. Format per the output block below. If multiple Zephyr ids exist, list all comma-separated.
+7. **Cache write**: save the formatted block to `/memories/session/jira-<KEY>.md` (overwrite).
 
 ## Output Format
 ```
