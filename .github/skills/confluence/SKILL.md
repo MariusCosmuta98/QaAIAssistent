@@ -17,6 +17,7 @@ Prefer Atlassian MCP server (`atlassian/*`). Fallback: REST `GET /wiki/rest/api/
 1. Resolve page id from URL (`.../pages/<id>/...`) or via `cql=title="<title>" AND space=<KEY>`.
 2. Fetch with `expand=body.storage,version`.
 3. Convert storage XHTML to plain Markdown before returning. Strip macros.
+4. **Truncate large pages**: if the converted Markdown exceeds **500 words**, summarize it to ≤200 words, preserving headings and key facts. Append a note: `(Truncated from <N> words. Ask for the full page if needed.)`
 
 ### Append QA notes
 1. Get current `version.number`.

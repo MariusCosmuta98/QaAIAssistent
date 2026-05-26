@@ -17,8 +17,8 @@ Auth: `ZEPHYR_TOKEN` env var as `Bearer`.
 ## Procedure
 ### Read test cases for a Jira key
 1. `GET /testcases?jql=issueKey = "<KEY>"` (or `/issuelinks/testcases?issueKey=<KEY>`).
-2. For each case, fetch `/testcases/{key}/teststeps` for steps + expected.
-3. Return in the [zephyr-fetcher agent](../../agents/zephyr-fetcher.agent.md) format.
+2. For each case, fetch `/testcases/{key}/teststeps` for steps + expected. **Batch**: issue step-fetch requests in parallel (not sequentially) to reduce round-trip reasoning overhead.
+3. Return in the [zephyr-fetcher agent](../../agents/zephyr-fetcher.agent.md) format. Drop all fields not in the output template (e.g. `createdOn`, `owner`, `customFields`).
 
 ### Create a new test case
 1. `POST /testcases` with: `projectKey`, `name`, `objective`, `precondition`, `priorityName`.

@@ -14,9 +14,9 @@ Prefer the Atlassian MCP server if configured (`atlassian/*` or `mcp-atlassian/*
 
 ## Procedure
 1. Resolve ticket key (uppercase, e.g. `abc-123` → `ABC-123`).
-2. Fetch the issue with fields: `summary,status,issuetype,description,customfield_acceptance,issuelinks,attachment,subtasks,comment`.
+2. Fetch the issue **requesting only needed fields**: `GET /rest/api/3/issue/{key}?fields=summary,status,issuetype,description,comment,issuelinks,customfield_10014&expand=renderedFields`. Omit `attachment`, `subtasks`, `changelog` unless explicitly needed — they bloat the response.
 3. Run the **Zephyr / Figma / Confluence auto-extraction** below over every text field.
-4. Return only the [jira-fetcher agent](../../agents/jira-fetcher.agent.md) output format.
+4. Return only the [jira-fetcher agent](../../agents/jira-fetcher.agent.md) output format. Drop all fields not in the output template.
 
 ## Auto-Extract Linked Resources
 Scan `description`, `comment.comments[*].body`, `issuelinks[*]`, `remotelinks`, and any custom field text for:
@@ -35,10 +35,12 @@ Pull **all** matches and de-duplicate. Pass them to the orchestrator so `zephyr-
 Zephyr Scale stores coverage links **on its own side** — they do NOT appear in any Jira REST API response (not in `issuelinks`, `remotelinks`, labels, or description). When Step A yields no Zephyr references, query the Zephyr Scale API directly:
 
 1. Get the Jira issue numeric id from the fetched issue (`id` field in the Jira response, e.g. `1491225`).
-2. Paginate through `GET {ZEPHYR_BASE_URL}/testcases?projectKey={PROJECT_KEY}&startAt={n}&maxResults=200`.
+2. Paginate through `GET {ZEPHYR_BASE_URL}/testcases?projectKey={PROJECT_KEY}&startAt={n}&maxResults=50`.
    - Use `ZEPHYR_TOKEN` (Bearer) and `ZEPHYR_PROJECT_KEY` from env (fall back to the Jira project key).
+   - **Page size 50** (not 200) — smaller pages mean less wasted context if the match is found early.
 3. For each test case, check `links.issues[*].issueId` — if it matches the Jira issue numeric id, that test case covers this ticket.
 4. Collect matching test case keys (e.g. `QE-T1403`).
+5. **Early termination**: stop as soon as matches are found and the current page has been fully checked. **Hard cap**: stop after **5 pages** (250 cases) regardless — if no match, report `none`.
 
 > **Why this is needed:** Zephyr Scale's "Coverage" link type is stored only in Zephyr's database and surfaced only through the Zephyr API. The Jira UI shows it via the Zephyr Scale plugin panel, but the Jira REST API has no visibility into it.
 

@@ -53,3 +53,30 @@ Protocol (every fetcher follows it):
 3. The user can invalidate by saying "refresh <KEY>" — fetchers then skip step 1.
 
 The orchestrator does not manage the cache; each fetcher owns its own file.
+
+## Token Optimization Rules
+
+These rules apply to all agents and skills:
+
+### Filter API responses (all fetchers)
+- When using REST fallbacks, always request **only needed fields** (e.g. Jira `&fields=summary,status,...`). Never fetch a full object when a subset suffices.
+- Figma: always target specific node ids with `depth≤3`. Never fetch the full file.
+
+### Cap & terminate pagination early (Zephyr fallback)
+- Use small page sizes (`maxResults=50`, not 200) so less data enters context per page.
+- Stop paginating as soon as all expected matches are found.
+- Hard cap: **5 pages** (250 cases). If no match by then, report `none` — do not crawl the entire project.
+
+### Summarize before injecting (Confluence, Figma)
+- Confluence pages longer than **500 words**: summarize to ≤200 words before returning. Provide a reference id so the full page can be fetched on demand.
+- Figma node trees: flatten to the compact output format immediately. Never pass raw JSON into context.
+
+### Batch where possible (Zephyr)
+- When fetching steps for multiple test cases, issue requests in **parallel** rather than sequentially. Each round-trip costs reasoning tokens for the call + response.
+
+### Prune stale context (orchestrator)
+- After building the plan (step 5), carry forward only the **plan lines and PROJECT_CONTEXT.md** into the implementation step. Summarize fetcher outputs into the plan — do not keep full fetcher blocks in working memory.
+
+### Avoid redundant fetches (all agents)
+- Always check `/memories/session/` cache before calling any API.
+- The Zephyr fallback in `jira-fetcher` already discovers test case keys. Pass those keys to `zephyr-fetcher` — it must not re-search by Jira key.
