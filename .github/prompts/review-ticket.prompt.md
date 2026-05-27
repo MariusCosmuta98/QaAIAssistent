@@ -11,4 +11,4 @@ After returning your standard output block, additionally:
 - If `figma:` has a URL, also call `figma-fetcher`.
 - Run those two in parallel if both apply.
 
-Do NOT touch the codebase. Do NOT read `PROJECT_CONTEXT.md`. Do NOT involve the orchestrator.
+Do NOT touch the codebase. Do NOT read `.github/PROJECT_CONTEXT.md`. Do NOT involve the orchestrator.

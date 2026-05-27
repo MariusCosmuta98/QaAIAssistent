@@ -14,9 +14,15 @@ Prefer the Atlassian MCP server if configured (`atlassian/*` or `mcp-atlassian/*
 
 ## Procedure
 1. Resolve ticket key (uppercase, e.g. `abc-123` → `ABC-123`).
-2. Fetch the issue **requesting only needed fields**: `GET /rest/api/3/issue/{key}?fields=summary,status,issuetype,description,comment,issuelinks,customfield_10014&expand=renderedFields`. Omit `attachment`, `subtasks`, `changelog` unless explicitly needed — they bloat the response.
-3. Run the **Zephyr / Figma / Confluence auto-extraction** below over every text field.
-4. Return only the [jira-fetcher agent](../../agents/jira-fetcher.agent.md) output format. Drop all fields not in the output template.
+2. Fetch the issue **requesting only needed fields**: `GET /rest/api/3/issue/{key}?fields=summary,status,issuetype,description,comment,issuelinks,parent,customfield_10014,customfield_10008&expand=renderedFields`. Omit `attachment`, `subtasks`, `changelog` unless explicitly needed — they bloat the response.
+   - `customfield_10014` = **Epic Link** (classic projects). `customfield_10008` is the older variant. `parent.key` is the epic in next-gen projects. Capture whichever is non-null as `EPIC_KEY`.
+3. **Epic context (only if `EPIC_KEY` exists and is different from the ticket itself):**
+   1. Fetch the epic with minimal fields: `GET /rest/api/3/issue/{EPIC_KEY}?fields=summary,status`.
+   2. Find sibling tickets under the same epic via JQL: `GET /rest/api/3/search?jql="Epic Link"={EPIC_KEY} OR parent={EPIC_KEY}&fields=summary,status&maxResults=25`.
+   3. For each sibling key, check if `/memories/repo/ticket-<SIBLING_KEY>.md` exists (these are notes from previous implementations). Collect only siblings that have a memory file — those are the implemented ones whose scope/patterns the orchestrator may want to reuse.
+   4. Do NOT read the sibling memory files yourself — just list their keys. The orchestrator decides whether to load them.
+4. Run the **Zephyr / Figma / Confluence auto-extraction** below over every text field.
+5. Return only the [jira-fetcher agent](../../agents/jira-fetcher.agent.md) output format. Drop all fields not in the output template.
 
 ## Auto-Extract Linked Resources
 Scan `description`, `comment.comments[*].body`, `issuelinks[*]`, `remotelinks`, and any custom field text for:

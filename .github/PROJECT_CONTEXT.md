@@ -35,6 +35,15 @@ Run `/scan-project` to (re)generate it. Keep it short — it is loaded as contex
 - Run tests:
 - Lint:
 
+## Repo Setup
+<!-- One-time setup so a new dev/agent can run the project. Fill verified facts only. -->
+- Required runtimes (versions): <!-- e.g. Node 20.x, JDK 17, Python 3.11 -->
+- Required global tools: <!-- e.g. pnpm, docker, gradle wrapper present? -->
+- Env files / secrets: <!-- e.g. `.env.example` -> copy to `.env`; required keys -->
+- Local services: <!-- e.g. docker compose up db; ports used -->
+- First-run sequence: <!-- exact commands, in order, to go from clone -> green tests -->
+- CI entrypoint: <!-- workflow file path + main job name -->
+
 ## Notes for the Agent
 - Things to avoid:
 - Things to always do:

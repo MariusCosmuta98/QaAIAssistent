@@ -12,18 +12,18 @@ One agent = one job. The orchestrator delegates; it does not fetch.
 
 | Step | Owner | Output |
 |------|-------|--------|
-| Understand the host project | [project-scanner](./agents/project-scanner.agent.md) | [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) |
-| Read a Jira ticket | [jira-fetcher](./agents/jira-fetcher.agent.md) | Ticket summary + auto-extracted links |
-| Read Zephyr test cases | [zephyr-fetcher](./agents/zephyr-fetcher.agent.md) | Test case list |
-| Read Figma design | [figma-fetcher](./agents/figma-fetcher.agent.md) | UI spec |
-| Implement / scaffold | [qa-orchestrator](./agents/qa-orchestrator.agent.md) | Code + tests |
+| Understand the host project | [project-scanner](agents/project-scanner.agent.md) | [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) |
+| Read a Jira ticket | [jira-fetcher](agents/jira-fetcher.agent.md) | Ticket summary + auto-extracted links |
+| Read Zephyr test cases | [zephyr-fetcher](agents/zephyr-fetcher.agent.md) | Test case list |
+| Read Figma design | [figma-fetcher](agents/figma-fetcher.agent.md) | UI spec |
+| Implement / scaffold | [qa-orchestrator](agents/qa-orchestrator.agent.md) | Code + tests |
 
 Integration knowledge → [skills/](./skills/). Slash commands → [prompts/](./prompts/).
 
 ## Golden Rules
 
 - **One agent = one job.** Orchestrator delegates only.
-- **Read [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) once per task.** If missing or unfilled, stop and ask the user to run `/scan-project`. **Never auto-run it.**
+- **Read [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) once per task.** If missing or unfilled, stop and ask the user to run `/scan-project`. **Never auto-run it.**
 - **Return only relevant info.** Code + minimal rationale. No essays, no restating the ticket.
 - **Match the host project's conventions** (from `PROJECT_CONTEXT.md`).
 
@@ -53,6 +53,29 @@ Protocol (every fetcher follows it):
 3. The user can invalidate by saying "refresh <KEY>" — fetchers then skip step 1.
 
 The orchestrator does not manage the cache; each fetcher owns its own file.
+
+## Per-Ticket Memory (`/memories/repo/`)
+
+Persistent across conversations — survives between `/implement` runs so later tickets can build on earlier ones.
+
+File naming: `/memories/repo/ticket-<KEY>.md` (one file per implemented Jira ticket).
+
+Lifecycle:
+1. `jira-fetcher` lists sibling tickets under the same epic and notes which ones have a memory file → `Implemented Siblings:` block.
+2. `qa-orchestrator` reads those sibling memories to align scope/patterns, then implements.
+3. `qa-orchestrator` writes the new ticket's memory at the end of `/implement` using the Ticket Memory Template (see orchestrator agent).
+
+Keep each memory file ≤ 40 lines. It will be loaded verbatim by future runs.
+
+## Path Rules
+
+All assistant config lives under **`.github/`**, never the workspace root:
+- `.github/PROJECT_CONTEXT.md` — project context (read once per task)
+- `.github/agents/*.agent.md` — subagent definitions
+- `.github/skills/<topic>/SKILL.md` — integration knowledge
+- `.github/prompts/*.prompt.md` — slash commands
+
+If `.github/PROJECT_CONTEXT.md` cannot be read, **stop** and ask the user to run `/scan-project`. Never fall back to `./PROJECT_CONTEXT.md` at the workspace root.
 
 ## Token Optimization Rules
 
