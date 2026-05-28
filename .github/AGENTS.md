@@ -21,10 +21,12 @@ Integration knowledge → [skills/](skills/). Slash commands → [prompts/](prom
 
 ## Golden Rules
 
+- **No hallucination.** Every fact used (ticket fields, file contents, API responses) MUST come from an actual tool call. Never fabricate tool results, file contents, or API responses. If a tool call fails, report the error — do not invent a successful response.
 - **One agent = one job.** Orchestrator delegates only.
 - **Read [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) once per task.** If missing or unfilled, stop and ask the user to run `/scan-project`. **Never auto-run it.**
 - **Return only relevant info.** Code + minimal rationale. No essays, no restating the ticket.
 - **Match the host project's conventions** (from `PROJECT_CONTEXT.md`).
+- **Verify writes.** After writing any file, read it back to confirm the content was saved.
 
 ## Token Budget
 

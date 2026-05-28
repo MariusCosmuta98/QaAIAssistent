@@ -6,14 +6,14 @@ argument-hint: "JIRA-KEY or Jira URL"
 
 Implement the ticket: **${input:ticket:Jira ticket key (ABC-123) or full URL}**.
 
-Rules:
-1. All context/agent/skill files live under **`.github/`** — never look in the workspace root.
-   - Read project context from `.github/PROJECT_CONTEXT.md` (stop if missing or unfilled — tell the user to run `/scan-project`).
-   - Subagent definitions are at `.github/agents/*.agent.md`.
-2. Extract the Jira key from the input (key or URL).
-3. Delegate to `jira-fetcher` first. From its output:
-   - If `Implemented Siblings:` lists keys, load each `/memories/repo/ticket-<KEY>.md` and reuse their scope/patterns where they fit.
-   - From `Links:`: call `zephyr-fetcher` only if Zephyr ids/cycle were extracted (pass those ids, not the Jira key).
-4. Do NOT read the skill files yourself — the subagents handle that.
-5. After implementing, write `/memories/repo/ticket-<KEY>.md` using the Ticket Memory Template from the orchestrator agent.
-6. Output only the `Ticket / Reused siblings / Plan / Changes / Memory / Run` block.
+## Mandatory rules — violating any one invalidates the run
+
+1. **No hallucination.** Every fact you use (acceptance criteria, API endpoints, selectors, file contents) MUST come from an actual tool call response. If you catch yourself writing a `<tool_result>` block, you are hallucinating — stop immediately.
+2. **Actually call tools.** Use `read_file` to read files. Use `runSubagent` to delegate to `jira-fetcher` and `zephyr-fetcher`. Wait for the real response before proceeding.
+3. **Read `.github/PROJECT_CONTEXT.md` first** (stop if missing or unfilled — tell the user to run `/scan-project`).
+4. **Delegate to `jira-fetcher`** via `runSubagent`. Read its actual response. Do not invent ticket content.
+5. **Sibling memories are optional.** Only read `/memories/repo/ticket-<KEY>.md` files that actually exist (read_file succeeds). If a file doesn't exist, skip it — do not fabricate its contents. Max 3 siblings.
+6. **Call `zephyr-fetcher`** only if the jira-fetcher output lists Zephyr ids (not `none`).
+7. **Verify every file write** by reading the file back afterward.
+8. **Write `/memories/repo/ticket-<KEY>.md`** at the end using the Ticket Memory Template.
+9. **Output only** the `Ticket / Reused siblings / Plan / Changes / Memory / Run` block.

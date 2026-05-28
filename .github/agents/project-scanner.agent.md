@@ -1,6 +1,6 @@
 ---
 description: "Use when the host project has not been scanned yet, or when PROJECT_CONTEXT.md is stale. Scans codebase, infers stack/framework/design pattern/test conventions, and writes a concise PROJECT_CONTEXT.md."
-tools: [read, search, edit, todo]
+tools: [read, search, edit, createFile, todo]
 user-invocable: true
 ---
 
@@ -11,7 +11,6 @@ You are the **Project Scanner**. Your only job is to produce or refresh `.github
 - DO NOT call Jira/Zephyr.
 - DO NOT write more than ~80 lines into `PROJECT_CONTEXT.md`. Brevity wins.
 - ONLY write facts you verified by reading files.
-- DO NOT use a "create file" tool on `.github/PROJECT_CONTEXT.md` — the file already exists from the template. Use an **edit / replace** tool to update it in place. If you ever see a "file already exists" error, switch to the edit tool and continue — do not stop and ask the user.
 
 ## Approach
 1. List the workspace root. Identify manifest files (`package.json`, `pom.xml`, `build.gradle`, `pyproject.toml`, `requirements.txt`, `go.mod`, `Cargo.toml`, `*.csproj`, `Gemfile`, `composer.json`, etc.).
@@ -28,8 +27,19 @@ You are the **Project Scanner**. Your only job is to produce or refresh `.github
    - First-run sequence: derive from README "Getting Started" / "Setup" section; otherwise reconstruct from install + build + test scripts.
    - CI entrypoint: first file under `.github/workflows/` (path + top-level `name:`).
    Leave any sub-bullet blank if not verifiable from files — do not guess.
-8. Edit `.github/PROJECT_CONTEXT.md` in place, keeping the existing section headings (`## Stack`, `## Layout`, `## Patterns`, `## QA Conventions`, `## Build / Run`, `## Repo Setup`, `## Notes for the Agent`). Leave a bullet blank if unknown.
-9. **Verify the write**: after editing, **read `.github/PROJECT_CONTEXT.md` back** and confirm the content was actually written (sections are no longer the empty template). If the file is still empty or unchanged, retry the edit with a different tool (e.g. `insert_edit_into_file` instead of `replace_file_content`). Do NOT report success without verifying.
+8. **Write the file** — use this exact strategy:
+   a. **Read** the current `.github/PROJECT_CONTEXT.md` in full so you have the exact content as a string.
+   b. Build the **complete new file content** in memory (keep the HTML comment header, all `##` section headings, fill in discovered facts). This is your `newContent`.
+   c. Try `replace_string_in_file`: use the **entire old file content** (every line, verbatim, from the HTML comment to the last line) as `oldString`, and `newContent` as `newString`.
+   d. **If the replace tool fails or reports no match**, immediately use `create_file` with filePath `.github/PROJECT_CONTEXT.md` and content = `newContent`. This will overwrite the file — that is the intended behavior for this file.
+   e. **Do NOT proceed to step 9 until you have called one of these tools and it reported success.**
+
+9. **MANDATORY verification** — this step is not optional:
+   a. Call `read_file` on `.github/PROJECT_CONTEXT.md` and read the full contents.
+   b. Check: does the file still contain the line `> Not yet generated. Run \`/scan-project\`.`?
+   c. If **yes** → your write failed silently. Go back to step 8d and use `create_file`.
+   d. If **no** and the sections contain the facts you discovered → write succeeded.
+   e. **NEVER report success if the file still contains the template placeholder.**
 
 ## Output Format
 A single confirmation line: `PROJECT_CONTEXT.md updated (<n> sections filled).` Nothing else.
