@@ -7,7 +7,7 @@ description: "Use when reading or updating Jira issues (ticket key like ABC-123)
 
 ## When to Use
 - A ticket key is mentioned (e.g. `ABC-123`).
-- The agent needs acceptance criteria, status, links to Zephyr/Figma/Confluence.
+- The agent needs acceptance criteria, status, links to Zephyr.
 
 ## Tools
 Prefer the Atlassian MCP server if configured (`atlassian/*` or `mcp-atlassian/*`). Fallback: REST API `GET /rest/api/3/issue/{key}` with `JIRA_BASE_URL` + token from env.
@@ -21,7 +21,7 @@ Prefer the Atlassian MCP server if configured (`atlassian/*` or `mcp-atlassian/*
    2. Find sibling tickets under the same epic via JQL: `GET /rest/api/3/search?jql="Epic Link"={EPIC_KEY} OR parent={EPIC_KEY}&fields=summary,status&maxResults=25`.
    3. For each sibling key, check if `/memories/repo/ticket-<SIBLING_KEY>.md` exists (these are notes from previous implementations). Collect only siblings that have a memory file — those are the implemented ones whose scope/patterns the orchestrator may want to reuse.
    4. Do NOT read the sibling memory files yourself — just list their keys. The orchestrator decides whether to load them.
-4. Run the **Zephyr / Figma / Confluence auto-extraction** below over every text field.
+4. Run the **Zephyr auto-extraction** below over every text field.
 5. Return only the [jira-fetcher agent](../../agents/jira-fetcher.agent.md) output format. Drop all fields not in the output template.
 
 ## Auto-Extract Linked Resources
@@ -55,12 +55,6 @@ Zephyr Scale stores coverage links **on its own side** — they do NOT appear in
 - cycle only → `cycle:<id>`
 - both → `ABC-T1, ABC-T2; cycle:<id>`
 - nothing found → `none`
-
-### Figma
-- Any URL matching `figma\.com/(file|design|proto)/[^\s)]+`. Keep the full URL.
-
-### Confluence
-- Any URL matching `\.atlassian\.net/wiki/` or `confluence[^\s)]*`.
 
 ## Field Map (common)
 - Acceptance Criteria: usually `customfield_10000`+ — search description if missing.

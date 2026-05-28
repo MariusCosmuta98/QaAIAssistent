@@ -3,7 +3,7 @@
   // This file is auto-detected from .junie/mcp.json at project root.
   // Credentials are loaded from .env at the project root.
   "servers": {
-    // ── Jira + Confluence (mandatory) ──────────────────
+    // ── Jira (mandatory) ──────────────────────────────
     "atlassian": {
       "type": "sse",
       "url": "https://mcp.atlassian.com/v1/sse",
@@ -24,14 +24,5 @@
         "ZEPHYR_PROJECT_KEY": "${env:ZEPHYR_PROJECT_KEY}"
       }
     }
-
-    // ── Figma (optional) ───────────────────────────────
-    // "figma": {
-    //   "command": "npx",
-    //   "args": ["-y", "figma-developer-mcp"],
-    //   "env": {
-    //     "FIGMA_TOKEN": "${env:FIGMA_TOKEN}"
-    //   }
-    // }
   }
 }

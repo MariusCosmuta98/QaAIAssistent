@@ -44,10 +44,6 @@ Run `/scan-project` to (re)generate it. Keep it short — it is loaded as contex
 - First-run sequence: <!-- exact commands, in order, to go from clone -> green tests -->
 - CI entrypoint: <!-- workflow file path + main job name -->
 
-## Agent Settings
-<!-- Toggle agent capabilities. Change the value and save — the agent reads this on every task. -->
-- `agent_run: false`  <!-- set to true to allow the agent to execute terminal commands (run tests, verify output, self-correct) -->
-
 ## Notes for the Agent
 - Things to avoid:
 - Things to always do:

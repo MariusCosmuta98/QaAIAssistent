@@ -19,7 +19,7 @@ Refer to the [jira skill](../skills/jira/SKILL.md) for which tools to use and ho
 1. Receive a ticket reference (key `ABC-123` or full URL). Extract key with regex `[A-Z][A-Z0-9_]+-\d+`.
 2. **Cache check**: view `/memories/session/jira-<KEY>.md`. If it exists and the user did not say "refresh", return its contents verbatim and stop.
 3. Discover a Jira tool (Atlassian MCP `*jira*`/`*atlassian*`, else HTTP with `JIRA_BASE_URL`). If none, output `NO_JIRA_TOOL_AVAILABLE: <key>` and stop.
-4. Fetch the issue. Extract: title, type, status, short goal, acceptance criteria, **epic key** (`parent.key` or `customfield_10014` / `customfield_10008`), and **all** linked Zephyr / Figma / Confluence references — see the jira skill for the patterns to scan.
+4. Fetch the issue. Extract: title, type, status, short goal, acceptance criteria, **epic key** (`parent.key` or `customfield_10014` / `customfield_10008`), and **all** linked Zephyr references — see the jira skill for the patterns to scan.
 5. **Epic context** (only if an epic key was found and it differs from the ticket itself):
    - Fetch the epic's `summary` + `status`.
    - Search siblings under the epic (JQL `"Epic Link"={EPIC} OR parent={EPIC}`, max 25, fields `summary,status`).
@@ -40,6 +40,4 @@ Implemented Siblings:
 - ... | none
 Links:
 - zephyr: <TC-key(s) | cycle:<id> | none>
-- figma: <url or none>
-- confluence: <url or none>
 ```

@@ -1,5 +1,5 @@
 ---
-description: "Implement a Jira ticket end-to-end: fetch ticket + Zephyr tests + Figma, then write code/tests in the host project's style."
+description: "Implement a Jira ticket end-to-end: fetch ticket + Zephyr tests, then write code/tests in the host project's style."
 agent: "qa-orchestrator"
 argument-hint: "JIRA-KEY or Jira URL"
 ---
@@ -13,7 +13,7 @@ Rules:
 2. Extract the Jira key from the input (key or URL).
 3. Delegate to `jira-fetcher` first. From its output:
    - If `Implemented Siblings:` lists keys, load each `/memories/repo/ticket-<KEY>.md` and reuse their scope/patterns where they fit.
-   - From `Links:`: call `zephyr-fetcher` only if Zephyr ids/cycle were extracted (pass those ids, not the Jira key). Call `figma-fetcher` only if a Figma URL was extracted.
+   - From `Links:`: call `zephyr-fetcher` only if Zephyr ids/cycle were extracted (pass those ids, not the Jira key).
 4. Do NOT read the skill files yourself — the subagents handle that.
 5. After implementing, write `/memories/repo/ticket-<KEY>.md` using the Ticket Memory Template from the orchestrator agent.
 6. Output only the `Ticket / Reused siblings / Plan / Changes / Memory / Run` block.

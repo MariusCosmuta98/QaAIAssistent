@@ -3,7 +3,7 @@
 Portable QA assistant. Drop into any project. Helps QA engineers implement tickets by:
 
 1. Scanning the host project once → single context file.
-2. Fetching Jira (+ Zephyr / Figma / Confluence found inside the ticket).
+2. Fetching Jira (+ Zephyr test cases found inside the ticket).
 3. Implementing or scaffolding tests using that combined context.
 
 ## Architecture
@@ -15,10 +15,9 @@ One agent = one job. The orchestrator delegates; it does not fetch.
 | Understand the host project | [project-scanner](agents/project-scanner.agent.md) | [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) |
 | Read a Jira ticket | [jira-fetcher](agents/jira-fetcher.agent.md) | Ticket summary + auto-extracted links |
 | Read Zephyr test cases | [zephyr-fetcher](agents/zephyr-fetcher.agent.md) | Test case list |
-| Read Figma design | [figma-fetcher](agents/figma-fetcher.agent.md) | UI spec |
 | Implement / scaffold | [qa-orchestrator](agents/qa-orchestrator.agent.md) | Code + tests |
 
-Integration knowledge → [skills/](./skills/). Slash commands → [prompts/](./prompts/).
+Integration knowledge → [skills/](skills/). Slash commands → [prompts/](prompts/).
 
 ## Golden Rules
 
@@ -31,7 +30,7 @@ Integration knowledge → [skills/](./skills/). Slash commands → [prompts/](./
 
 To keep runs cheap:
 - `/scan-project` is **manual-only**. Run it once per repo (and re-run only when the stack changes).
-- `jira-fetcher` auto-extracts Zephyr / Figma / Confluence ids from the ticket. The orchestrator calls Zephyr/Figma **only if** ids were found — never speculatively.
+- `jira-fetcher` auto-extracts Zephyr test case ids from the ticket. The orchestrator calls Zephyr **only if** ids were found — never speculatively.
 - `zephyr-fetcher` queries by extracted ids directly; it does not also search by Jira key.
 - Subagents return compact fixed-format blocks. Do not re-read skill files from the orchestrator.
 - Do not re-read `PROJECT_CONTEXT.md` mid-task. Read once.
@@ -45,7 +44,6 @@ Fetcher outputs are cached for the duration of the conversation so the same tick
 Cache file naming:
 - Jira:      `/memories/session/jira-<KEY>.md`
 - Zephyr:    `/memories/session/zephyr-<KEY-or-cycleId>.md`
-- Figma:     `/memories/session/figma-<nodeId-or-urlSlug>.md`
 
 Protocol (every fetcher follows it):
 1. **Before** discovering tools, check if the cache file exists. If yes → return its contents verbatim. No API call.
@@ -83,16 +81,11 @@ These rules apply to all agents and skills:
 
 ### Filter API responses (all fetchers)
 - When using REST fallbacks, always request **only needed fields** (e.g. Jira `&fields=summary,status,...`). Never fetch a full object when a subset suffices.
-- Figma: always target specific node ids with `depth≤3`. Never fetch the full file.
 
 ### Cap & terminate pagination early (Zephyr fallback)
 - Use small page sizes (`maxResults=50`, not 200) so less data enters context per page.
 - Stop paginating as soon as all expected matches are found.
 - Hard cap: **5 pages** (250 cases). If no match by then, report `none` — do not crawl the entire project.
-
-### Summarize before injecting (Confluence, Figma)
-- Confluence pages longer than **500 words**: summarize to ≤200 words before returning. Provide a reference id so the full page can be fetched on demand.
-- Figma node trees: flatten to the compact output format immediately. Never pass raw JSON into context.
 
 ### Batch where possible (Zephyr)
 - When fetching steps for multiple test cases, issue requests in **parallel** rather than sequentially. Each round-trip costs reasoning tokens for the call + response.
