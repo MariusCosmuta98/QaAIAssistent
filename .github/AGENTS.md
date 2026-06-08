@@ -56,16 +56,14 @@ The orchestrator does not manage the cache; each fetcher owns its own file.
 
 ## Per-Ticket Memory (`/memories/repo/`)
 
-Persistent across conversations — survives between `/implement` runs so later tickets can build on earlier ones.
+Persistent across conversations — survives between `/implement` runs as a record of what was done per ticket.
 
 File naming: `/memories/repo/ticket-<KEY>.md` (one file per implemented Jira ticket).
 
 Lifecycle:
-1. `jira-fetcher` lists sibling tickets under the same epic and notes which ones have a memory file → `Implemented Siblings:` block.
-2. `qa-orchestrator` reads those sibling memories to align scope/patterns, then implements.
-3. `qa-orchestrator` writes the new ticket's memory at the end of `/implement` using the Ticket Memory Template (see orchestrator agent).
+1. `qa-orchestrator` writes the ticket's memory at the end of `/implement` using the Ticket Memory Template (see orchestrator agent).
 
-Keep each memory file ≤ 40 lines. It will be loaded verbatim by future runs.
+Keep each memory file ≤ 40 lines.
 
 ## Path Rules
 
