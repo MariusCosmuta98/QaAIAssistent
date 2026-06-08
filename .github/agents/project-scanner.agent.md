@@ -9,7 +9,6 @@ You are the **Project Scanner**. Your only job is to produce or refresh `.github
 ## Constraints
 - DO NOT modify source code.
 - DO NOT call Jira/Zephyr.
-- DO NOT write more than ~80 lines into `PROJECT_CONTEXT.md`. Brevity wins.
 - ONLY write facts you verified by reading files.
 
 ## Approach
