@@ -10,6 +10,7 @@ You are the **Project Scanner**. Your only job is to produce or refresh `.github
 - DO NOT modify source code.
 - DO NOT call Jira/Zephyr.
 - ONLY write facts you verified by reading files.
+- The generated file MUST include a Mermaid diagram that explains the verified project flow.
 
 ## Approach
 1. List the workspace root. Identify manifest files (`package.json`, `pom.xml`, `build.gradle`, `pyproject.toml`, `requirements.txt`, `go.mod`, `Cargo.toml`, `*.csproj`, `Gemfile`, `composer.json`, etc.).
@@ -26,18 +27,27 @@ You are the **Project Scanner**. Your only job is to produce or refresh `.github
    - First-run sequence: derive from README "Getting Started" / "Setup" section; otherwise reconstruct from install + build + test scripts.
    - CI entrypoint: first file under `.github/workflows/` (path + top-level `name:`).
    Leave any sub-bullet blank if not verifiable from files — do not guess.
-8. **Write the file** — use this exact strategy:
+8. **Build the architecture diagram (verified-only)**
+   - Add a `## Architecture Diagram` section in `.github/PROJECT_CONTEXT.md`.
+   - Use a Mermaid `flowchart LR` block.
+   - Include only nodes/edges you verified from files (folders, services, apps, APIs, DB, test runner).
+   - Keep labels short and concrete (e.g. `web-app`, `api`, `postgres`, `playwright`).
+   - Readability rules: max 12 nodes, max 2 levels of subgraphs, avoid HTML tags like `<br>`, avoid long filenames inside node labels.
+   - If names are long, use short aliases in the diagram and add an `Architecture Details` bullet list directly below it mapping alias -> real path/file.
+   - If the flow cannot be fully verified, keep a minimal high-confidence diagram and add unknowns to `## Notes for the Agent`.
+
+9. **Write the file** — use this exact strategy:
    a. **Read** the current `.github/PROJECT_CONTEXT.md` in full so you have the exact content as a string.
    b. Build the **complete new file content** in memory (keep the HTML comment header, all `##` section headings, fill in discovered facts). This is your `newContent`.
    c. Try `replace_string_in_file`: use the **entire old file content** (every line, verbatim, from the HTML comment to the last line) as `oldString`, and `newContent` as `newString`.
    d. **If the replace tool fails or reports no match**, immediately use `create_file` with filePath `.github/PROJECT_CONTEXT.md` and content = `newContent`. This will overwrite the file — that is the intended behavior for this file.
-   e. **Do NOT proceed to step 9 until you have called one of these tools and it reported success.**
+   e. **Do NOT proceed to step 10 until you have called one of these tools and it reported success.**
 
-9. **MANDATORY verification** — this step is not optional:
+10. **MANDATORY verification** — this step is not optional:
    a. Call `read_file` on `.github/PROJECT_CONTEXT.md` and read the full contents.
    b. Check: does the file still contain the line `> Not yet generated. Run \`/scan-project\`.`?
    c. If **yes** → your write failed silently. Go back to step 8d and use `create_file`.
-   d. If **no** and the sections contain the facts you discovered → write succeeded.
+   d. If **no** and the sections contain the facts you discovered (including `## Architecture Diagram`) → write succeeded.
    e. **NEVER report success if the file still contains the template placeholder.**
 
 ## Output Format

@@ -23,6 +23,19 @@ Run `/scan-project` to (re)generate it. Keep it short — it is loaded as contex
 - Naming conventions:
 - State management / DI:
 
+## Architecture Diagram
+```mermaid
+flowchart LR
+	A[project source] --> B[app/runtime]
+	B --> C[external dependencies]
+	D[test suite] --> B
+```
+<!-- Replace this template with a verified diagram during /scan-project. -->
+
+## Architecture Details
+- Use short aliases in diagram nodes and map them here when real names are long.
+- Example: `WF` -> `.github/workflows/reusable-e2e-cypress-tests.yml`
+
 ## QA Conventions
 - Where new tests go:
 - Test file naming:

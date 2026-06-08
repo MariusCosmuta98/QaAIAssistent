@@ -9,16 +9,15 @@ Portable Copilot/agent customization for QA teams. Copy the `.github/` folder in
 
 ## Architecture (one agent per job)
 
-```
-            ┌──────────────────┐
-  user ──►  │ qa-orchestrator  │  ── reads .github/PROJECT_CONTEXT.md
-            └────────┬─────────┘        reads /memories/repo/ticket-*.md
-                     │ delegates
-       ┌─────────────┴─────────────┐
-       ▼                           ▼
-  jira-fetcher          zephyr-fetcher
-       │                           │
-       └── skills/jira       zephyr
+```mermaid
+flowchart LR
+   U[user] --> Q[qa-orchestrator]
+   Q --> PC[.github/PROJECT_CONTEXT.md]
+   Q --> TM[/memories/repo/ticket-KEY.md]
+   Q --> J[jira-fetcher]
+   Q --> Z[zephyr-fetcher]
+   J --> SJ[skills/jira]
+   Z --> SZ[skills/zephyr]
 ```
 
 `project-scanner` is a separate agent run on demand to (re)generate the project context.
