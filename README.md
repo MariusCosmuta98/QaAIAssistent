@@ -12,7 +12,9 @@ Portable Copilot/agent customization for QA teams. Copy the `.github/` folder in
 ```mermaid
 flowchart LR
    U["user"] --> Q["qa-orchestrator"]
-   Q --> PC[".github/PROJECT_CONTEXT.md"]
+   U --> S["project-scanner"]
+   S --> PC[".github/PROJECT_CONTEXT.md"]
+   Q --> PC
    Q --> TM["/memories/repo/ticket-KEY.md"]
    Q --> J["jira-fetcher"]
    Q --> Z["zephyr-fetcher"]

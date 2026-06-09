@@ -8,7 +8,6 @@ Portable QA assistant. Drop into any project. Helps QA engineers implement ticke
 
 ## Architecture
 
-One agent = one job. The orchestrator delegates; it does not fetch.
 
 | Step | Owner | Output |
 |------|-------|--------|
@@ -27,6 +26,16 @@ Integration knowledge → [skills/](skills/). Slash commands → [prompts/](prom
 - **Return only relevant info.** Code + minimal rationale. No essays, no restating the ticket.
 - **Match the host project's conventions** (from `PROJECT_CONTEXT.md`).
 - **Verify writes.** After writing any file, read it back to confirm the content was saved.
+
+## Anti-Hallucination Rules (canonical)
+
+These apply to **every** agent and prompt in this pack. Agent/prompt files reference this section instead of repeating it.
+
+1. **NEVER fabricate tool results.** If you call a subagent, tool, or REST endpoint, you MUST wait for the actual response. If you find yourself writing a `<tool_result>` block, you are hallucinating — STOP immediately.
+2. **NEVER assume file contents.** If you need data from a file, call `read_file` and wait for the real output. If the file does not exist, treat it as non-existent — do not invent its contents.
+3. **NEVER invent acceptance criteria, test steps, API endpoints, selectors, or any detail that did not come from the actual Jira ticket or actual project files.** If you don't have it, ask the user.
+4. **NEVER skip subagent delegation.** The orchestrator MUST call `runSubagent` for Jira/Zephyr work and wait for the real response. If a subagent returns an error, report it — do not fabricate success.
+5. **After every file write, call `read_file` on the written file to verify content.** If verification fails, retry once, then stop and ask the user.
 
 ## Token Budget
 
@@ -64,6 +73,21 @@ Lifecycle:
 1. `qa-orchestrator` writes the ticket's memory at the end of `/implement` using the Ticket Memory Template (see orchestrator agent).
 
 Keep each memory file ≤ 40 lines.
+
+## Knowledge Base & Retrieval (RAG layer)
+
+The pack uses a lightweight RAG layout. See [knowledge/README.md](knowledge/README.md) for the full design.
+
+Flow on every `/implement`:
+1. **Retrieve** — orchestrator calls `context-retriever` (Step 1.5) to score [knowledge/INDEX.md](knowledge/INDEX.md) rows by lexical overlap with the task; reads only the top-K chunks.
+2. **Use** — those chunks are cited in the final `Sources:` output line.
+3. **Learn** — at the end (Step 10), `lesson-recorder` distills at most one durable lesson into `/memories/repo/lessons/<slug>.md` and appends a row to `INDEX.md`. May decline with `NO_LESSON`.
+4. **Curate** — the manual `/curate` command reports stale or broken chunks; archival happens only with user approval.
+
+Rules:
+- Retriever is offline & lexical — no embeddings, no API calls.
+- Lessons are ≤ 10 body lines and must cite the source ticket.
+- INDEX.md is the single source of truth for what is retrievable.
 
 ## Path Rules
 

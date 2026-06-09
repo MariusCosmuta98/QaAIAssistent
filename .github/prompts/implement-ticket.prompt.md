@@ -6,13 +6,10 @@ argument-hint: "JIRA-KEY or Jira URL"
 
 Implement the ticket: **${input:ticket:Jira ticket key (ABC-123) or full URL}**.
 
-## Mandatory rules — violating any one invalidates the run
+Follow the Anti-Hallucination Rules in [../AGENTS.md](../AGENTS.md) and the orchestrator's procedure in [../agents/qa-orchestrator.agent.md](../agents/qa-orchestrator.agent.md).
 
-1. **No hallucination.** Every fact you use (acceptance criteria, API endpoints, selectors, file contents) MUST come from an actual tool call response. If you catch yourself writing a `<tool_result>` block, you are hallucinating — stop immediately.
-2. **Actually call tools.** Use `read_file` to read files. Use `runSubagent` to delegate to `jira-fetcher` and `zephyr-fetcher`. Wait for the real response before proceeding.
-3. **Read `.github/PROJECT_CONTEXT.md` first** (stop if missing or unfilled — tell the user to run `/scan-project`).
-4. **Delegate to `jira-fetcher`** via `runSubagent`. Read its actual response. Do not invent ticket content.
-5. **Call `zephyr-fetcher`** only if the jira-fetcher output lists Zephyr ids (not `none`).
-6. **Verify every file write** by reading the file back afterward.
-7. **Write `/memories/repo/ticket-<KEY>.md`** at the end using the Ticket Memory Template.
-8. **Output only** the `Ticket / Plan / Changes / Memory / Run` block.
+Non-negotiable reminders:
+- Read `.github/PROJECT_CONTEXT.md` first. If it still says `> Not yet generated`, stop and ask the user to run `/scan-project`.
+- Delegate to `jira-fetcher` (and `zephyr-fetcher` only if Zephyr ids were found).
+- Verify every file write by reading it back.
+- End by writing `/memories/repo/ticket-<KEY>.md` and printing only the `Ticket / Plan / Changes / Memory / Run` block.

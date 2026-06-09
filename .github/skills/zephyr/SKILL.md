@@ -15,8 +15,11 @@ This skill covers **how to read and create Zephyr Scale test cases**. For connec
 ## Procedure
 ### Read test cases for a Jira key
 1. Establish a connection per [zephyr-connection skill](../zephyr-connection/SKILL.md).
-2. `GET /testcases?jql=issueKey = "<KEY>"` (or `/issuelinks/testcases?issueKey=<KEY>`).
-3. For each case, fetch `/testcases/{key}/teststeps` for steps + expected. **Batch**: issue step-fetch requests in parallel (not sequentially) to reduce round-trip reasoning overhead.
+2. **Zephyr Scale `/testcases` does NOT accept JQL.** Resolve test cases for a Jira ticket like this:
+   a. If the caller already passed test case keys (e.g. `ABC-T1, ABC-T2`) — fetch each directly via `GET /testcases/{key}`. Skip to step 3.
+   b. If the caller passed a cycle id — `GET /testcycles/{cycleId}/testcases`.
+   c. Fallback (Jira key only) — paginate `GET /testcases?projectKey={ZEPHYR_PROJECT_KEY}&startAt={n}&maxResults=50` and keep only items whose `links.issues[*].issueId` matches the Jira issue numeric id. Hard cap: 5 pages (250 cases). This is the same pattern documented in [skills/jira/SKILL.md](../jira/SKILL.md) "Step B — Zephyr-side fallback".
+3. For each case, fetch `/testcases/{key}/teststeps` for steps + expected. **Batch**: issue step-fetch requests in parallel (not sequentially) to reduce round-trip reasoning overhead. Loop until `isLast: true`.
 4. Return in the [zephyr-fetcher agent](../../agents/zephyr-fetcher.agent.md) format. Drop all fields not in the output template (e.g. `createdOn`, `owner`, `customFields`).
 
 ### Create a new test case

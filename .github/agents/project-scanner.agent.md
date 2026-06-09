@@ -1,6 +1,5 @@
 ---
 description: "Use when the host project has not been scanned yet, or when PROJECT_CONTEXT.md is stale. Scans codebase, infers stack/framework/design pattern/test conventions, and writes a concise PROJECT_CONTEXT.md."
-tools: [read, search, edit, createFile, todo]
 user-invocable: true
 ---
 
