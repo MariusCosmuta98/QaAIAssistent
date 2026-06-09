@@ -1,22 +1,22 @@
 ---
 name: jira
-description: "Use when reading or updating Jira issues (ticket key like ABC-123). Covers MCP/REST tool usage and which fields matter for QA work."
+description: "Use when reading or interpreting Jira issues (ticket key like ABC-123). Covers which fields to request, how to parse them, and how to auto-extract Zephyr references. For connection setup (MCP/REST/auth/env) see the jira-connection skill."
 ---
 
-# Jira
+# Jira (Read)
+
+This skill covers **how to read and interpret a Jira ticket**. For connection setup (MCP discovery, REST fallback, auth, env vars) see [jira-connection skill](../jira-connection/SKILL.md).
 
 ## When to Use
 - A ticket key is mentioned (e.g. `ABC-123`).
-- The agent needs acceptance criteria, status, links to Zephyr.
-
-## Tools
-Prefer the Atlassian MCP server if configured (`atlassian/*` or `mcp-atlassian/*`). Fallback: REST API `GET /rest/api/3/issue/{key}` with `JIRA_BASE_URL` + token from env.
+- The agent needs acceptance criteria, status, or links to Zephyr.
 
 ## Procedure
-1. Resolve ticket key (uppercase, e.g. `abc-123` → `ABC-123`).
-2. Fetch the issue **requesting only needed fields**: `GET /rest/api/3/issue/{key}?fields=summary,status,issuetype,description,comment,issuelinks&expand=renderedFields`. Omit `attachment`, `subtasks`, `changelog`, `parent`, and epic-link custom fields — they bloat the response and are not used.
-3. Run the **Zephyr auto-extraction** below over every text field.
-4. Return only the [jira-fetcher agent](../../agents/jira-fetcher.agent.md) output format. Drop all fields not in the output template.
+1. Establish a connection per [jira-connection skill](../jira-connection/SKILL.md).
+2. Resolve ticket key (uppercase, e.g. `abc-123` → `ABC-123`).
+3. Fetch the issue **requesting only needed fields**: `GET /rest/api/3/issue/{key}?fields=summary,status,issuetype,description,comment,issuelinks&expand=renderedFields`. Omit `attachment`, `subtasks`, `changelog`, `parent`, and epic-link custom fields — they bloat the response and are not used.
+4. Run the **Zephyr auto-extraction** below over every text field.
+5. Return only the [jira-fetcher agent](../../agents/jira-fetcher.agent.md) output format. Drop all fields not in the output template.
 
 > **Note:** Epic lookup and sibling-ticket discovery have been removed. Do not call the epic endpoint or run JQL searches for siblings.
 
@@ -55,11 +55,6 @@ Zephyr Scale stores coverage links **on its own side** — they do NOT appear in
 ## Field Map (common)
 - Acceptance Criteria: usually `customfield_10000`+ — search description if missing.
 - Description may be ADF (Atlassian Document Format), not Markdown — flatten before regex scanning.
-
-## Required Config (see [.env](../../../QaAIAssistent/.env))
-- `JIRA_BASE_URL` — e.g. `https://your-domain.atlassian.net`
-- `JIRA_USER_EMAIL` — Atlassian account email
-- `JIRA_API_TOKEN` — API token from https://id.atlassian.com/manage-profile/security/api-tokens
 
 ## Pitfalls
 - **Zephyr coverage links are invisible from Jira.** The Jira UI shows them via the Zephyr Scale plugin panel, but the Jira REST API returns nothing — no issue links, no remote links, no custom fields. Always run the Zephyr-side fallback (Step B above) when Jira fields yield no Zephyr references.
