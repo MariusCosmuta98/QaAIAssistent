@@ -3,7 +3,7 @@
 Portable Copilot/agent customization for QA teams. Copy the `.github/` folder into any project and you get:
 
 - **`/scan-project`** — agent reads the host project and writes [.github/PROJECT_CONTEXT.md](.github/PROJECT_CONTEXT.md), including a `## Repo Setup` section with runtimes, env files, local services, and first-run sequence.
-- **`/implement ABC-123`** — fetches Jira + Zephyr and writes tests in the project's own style, then saves a per-ticket memory file.
+- **`/implement-ticket ABC-123`** — fetches Jira + Zephyr and writes tests in the project's own style, then saves a per-ticket memory file.
 - **`/generate-test-cases ABC-123`** — proposes Zephyr test cases from acceptance criteria.
 - **`/review-ticket ABC-123`** — read-only ticket + tests + design summary.
 
