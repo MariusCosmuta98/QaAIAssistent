@@ -4,7 +4,7 @@ Standalone Jira → Markdown test-plan generator. Fully self-contained — does 
 
 ## What it does
 
-1. Reads a Jira ticket (cheap model, single API call, no reasoning).
+1. Reads a Jira ticket via the Atlassian MCP server (Claude Sonnet 4.6, single API call).
 2. Turns each acceptance criterion into a Markdown test case.
 3. Writes everything to `tests/plans/<TICKET-KEY>/` at the workspace root.
 
@@ -14,26 +14,75 @@ Standalone Jira → Markdown test-plan generator. Fully self-contained — does 
 JiraAgent/
 ├── README.md                      ← you are here
 ├── agents/
-│   ├── jira-reader.agent.md            ← cheap read-only Jira agent (GPT-4.1 mini)
+│   ├── jira-reader.agent.md            ← read-only Jira agent (Claude Sonnet 4.6)
 │   └── test-plan-generator.agent.md    ← consumes the reader, writes the plan
 ├── skills/
-│   └── jira-connection.skill.md        ← how to call Jira (MCP + REST fallback)
-├── prompts/
-│   └── plan-ticket.prompt.md           ← /plan-ticket <KEY> slash command
-└── examples/
-    └── EXAMPLE-1/                       ← what a generated plan looks like
-        ├── test-plan.md
-        ├── TC-01-user-can-log-in-with-valid-credentials.md
-        └── TC-02-login-rejects-invalid-password.md
+│   └── jira-connection.skill.md        ← how to call Jira (MCP only)
+└── prompts/
+    └── plan-ticket.prompt.md           ← /plan-ticket <KEY> slash command
 ```
 
-## How to use
+---
 
-### Activate the agents / prompts in VS Code Copilot Chat
+## Prerequisites
 
-VS Code Copilot Chat discovers agent and prompt files under `.github/agents/` and `.github/prompts/` by default. Because this folder is standalone, pick one of:
+### 1. Atlassian MCP server (required)
 
-**Option A — symlink (recommended, keeps this folder as source of truth):**
+The Jira reader uses the **Atlassian remote MCP server** — a hosted SSE endpoint provided by Atlassian. The reader will not fall back to REST; if the MCP server is unavailable it stops with `NO_JIRA_MCP_AVAILABLE`.
+
+#### Install via VS Code
+
+1. Open the Command Palette (`⌘⇧P` / `Ctrl+Shift+P`) and run **MCP: Add Server**.
+2. Choose **HTTP (SSE)** as the transport type.
+3. Enter the server URL: `https://mcp.atlassian.com/v1/sse`
+4. Give it the name `atlassian`.
+5. VS Code writes the entry to `.vscode/mcp.json` automatically.
+
+Alternatively, create or edit `.vscode/mcp.json` manually:
+
+```jsonc
+{
+  "servers": {
+    "atlassian": {
+      "type": "sse",
+      "url": "https://mcp.atlassian.com/v1/sse",
+      "env": {
+        "JIRA_BASE_URL": "${env:JIRA_BASE_URL}",
+        "JIRA_USER_EMAIL": "${env:JIRA_USER_EMAIL}",
+        "JIRA_API_TOKEN": "${env:JIRA_API_TOKEN}"
+      }
+    }
+  }
+}
+```
+
+> **Tip:** The `${env:…}` references are resolved from your `.env` file at the workspace root (see below). VS Code loads `.env` automatically when the MCP server starts.
+
+#### Verify the server is running
+
+Open the **MCP** pane in the VS Code sidebar (or run **MCP: List Servers**). The `atlassian` entry should show **Connected** and expose tools like `getJiraIssue` / `com.atlassian/atlassian-mcp-server/getJiraIssue`.
+
+### 2. Jira credentials
+
+Create a `.env` file at the workspace root (it is already in `.gitignore`):
+
+```env
+JIRA_BASE_URL=https://your-domain.atlassian.net
+JIRA_USER_EMAIL=you@example.com
+JIRA_API_TOKEN=<token from https://id.atlassian.com/manage-profile/security/api-tokens>
+```
+
+To generate an API token: Atlassian account settings → **Security** → **API tokens** → **Create API token**.
+
+---
+
+## Activate the agents / prompts in VS Code Copilot Chat
+
+VS Code Copilot Chat discovers agent and prompt files from `.github/agents/` and `.github/prompts/` by default. The agents in this folder are already wired up under `.github/` in this repo, so **no extra configuration is needed if you are using this repo directly**.
+
+If you copy JiraAgent into another project, pick one of:
+
+**Option A — symlink (keeps this folder as source of truth):**
 
 ```bash
 mkdir -p .github/agents .github/prompts
@@ -51,31 +100,27 @@ ln -s ../../JiraAgent/prompts/plan-ticket.prompt.md        .github/prompts/plan-
 }
 ```
 
-(Setting names vary between VS Code versions — check your version's docs if they don't take effect.)
+**Option C — copy** the files into `.github/agents/` and `.github/prompts/`.
 
-**Option C — copy** the files into `.github/agents/` and `.github/prompts/` (loses the "standalone" property but zero config).
+---
 
-### Configure Jira credentials
+## Run
 
-Add to `.env` at the workspace root:
-
-```
-JIRA_BASE_URL=https://your-domain.atlassian.net
-JIRA_USER_EMAIL=you@example.com
-JIRA_API_TOKEN=<token from https://id.atlassian.com/manage-profile/security/api-tokens>
-```
-
-If you also have the Atlassian MCP server registered in `.vscode/mcp.json`, the reader will prefer that over REST.
-
-### Run
-
-In Copilot Chat:
+Once the MCP server is connected and credentials are set, open Copilot Chat and run:
 
 ```
 /plan-ticket ABC-123
 ```
 
-Result: `tests/plans/ABC-123/test-plan.md` (index) + `TC-01-*.md`, `TC-02-*.md`, … (one per acceptance criterion). See `examples/EXAMPLE-1/` for the exact shape.
+Result: `tests/plans/ABC-123/test-plan.md` (index) + `TC-01-*.md`, `TC-02-*.md`, … (one per acceptance criterion).
+
+To regenerate an existing plan, add the word `refresh`:
+
+```
+/plan-ticket ABC-123 refresh
+```
+
+---
 
 ## Contract
 
@@ -85,4 +130,4 @@ Result: `tests/plans/ABC-123/test-plan.md` (index) + `TC-01-*.md`, `TC-02-*.md`,
 
 ## Anti-hallucination
 
-Every field written into the plan MUST come from a real Jira API response. If the reader cannot reach Jira, it stops with `NO_JIRA_TOOL_AVAILABLE` — it does not invent ticket contents. If an acceptance criterion is too vague to test, the generator emits a `NEEDS-CLARIFICATION` test case rather than making up thresholds or steps.
+Every field written into the plan MUST come from a real Jira API response. If the reader cannot reach the MCP server, it stops with `NO_JIRA_MCP_AVAILABLE` — it never fabricates ticket contents. If an acceptance criterion is too vague to test, the generator emits a `NEEDS-CLARIFICATION` test case rather than inventing thresholds or steps.
